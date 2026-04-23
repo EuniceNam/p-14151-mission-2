@@ -6,6 +6,17 @@ public class Calc {
     static final String MULT = "*";
 
     public static int run(String s) {
+        int lpidx = s.indexOf("(");
+        int rpidx;
+        if(lpidx != -1) {
+            rpidx = s.indexOf(")");
+            return calc(s.substring(lpidx+1, rpidx)); //(안의 exp만)
+        } else {
+            return calc(s);
+        }
+    }
+
+    private static int calc(String s) {
         String[] items = s.split(" ");
         int len = items.length;
         for(int i=1; i<=len/2; i++) {
