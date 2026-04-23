@@ -5,7 +5,8 @@ public class Calc {
     static final String SUB = "-";
     static final String MULT = "*";
 
-    public static int run(String s) {
+    public static int run(String s0) {
+        String s = s0.replaceAll("\\(+", "(").replaceAll("\\)+", ")");
         int lpidx = s.indexOf("(");
         int rpidx;
         if(lpidx != -1) {
