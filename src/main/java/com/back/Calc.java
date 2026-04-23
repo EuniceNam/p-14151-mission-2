@@ -8,6 +8,13 @@ public class Calc {
     public static int run(String s) {
         String[] items = s.split(" ");
         int len = items.length;
+        for(int i=1; i<=len/2; i++) {
+            if (items[i*2-1].equals(MULT)) {
+                items[i*2] = String.valueOf(Integer.parseInt(items[i*2-2]) * Integer.parseInt(items[i*2]));
+                items[i*2-1] = "+";
+                items[i*2-2] = "0";
+            }
+        }
         int lop = Integer.parseInt(items[0]);
         int rop;
         for(int i=1; i<=len/2; i++) {
@@ -15,7 +22,6 @@ public class Calc {
             switch (items[i*2-1]) {
                 case ADD -> lop += rop;
                 case SUB -> lop -= rop;
-                case MULT -> lop *= rop;
                 default -> {}
             }
         }
