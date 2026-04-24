@@ -3,89 +3,65 @@ package com.back;
 import java.util.Arrays;
 
 public class Calc {
+    static final char ADD = '+';
+    static final char MULT = '*';
+    static final char LP = '(';
+    static final char RP = ')';
 
-    public static int run(String s0) {
-        String s = s0.replaceAll("\\(","( " ).replaceAll("\\)", " )");
-        String[] items = s.split(" ");
-
-        return calc(items);
+    public static int run(String s) {
+        String exp = s.replace(" - ", " + -");// 뺄셈 > 음수의 덧셈
+        return parsP(exp);
     }
+    // 괄호 처리
+    private static int parsP(String exp) {
+        int lpidx = exp.indexOf(LP);
+        if (lpidx != -1){ // 괄호 있음
+            int rpidx = lpidx + getrpidx(exp.substring(lpidx));
+            // 괄호 안의 식을 계산하여 대체한 스트링 반환
+            return calc(exp.substring(0, lpidx)+calc(exp.substring(lpidx+1, rpidx))+exp.substring(rpidx+1));
+        } else { // 괄호 없음
+            return calc(exp);
+        }
+    }
+    // 괄호 분리 및 처리 > 덧셈 양쪽 분리 > 곱셈 처리 > 덧셈 처리
+    private static int calc(String exp) {
+        int lpidx = exp.indexOf(LP);
+        if (lpidx != -1){ // 괄호 있음
+            return parsP(exp);
+        } else { // 괄호 없음
+            int addidx = exp.indexOf(ADD);
+            if(addidx != -1) { // 덧셈 있음
+                String lop = exp.substring(0, addidx);
+                String rop = exp.substring(addidx + 1);
 
-    private static int calc(String[] items) {
-        int lop = nextInt(items);
-        String[] nextExp = null;
-        for (int i = 0; i < items.length; i++) {
-            Op o = Op.from(items[i]);
-            if (o != null) {
-                nextExp = Arrays.copyOfRange(items, i + 1, items.length);
-                switch (o) {
-                    case ADD -> {
-                        if (Op.ADD.priorLv() >= nexOpPLv(nextExp)) {
-                            lop += nextInt(nextExp);
-                        } else {
-                            return lop + calc(nextExp);
-                        }
+                if (lop.indexOf(MULT) < 0) { // 왼쪽 항에 곱셈 없음
+                    if (rop.indexOf(MULT) < 0) { // 오른쪽 항에 곱셈 없음
+                        return Arrays.stream(exp.trim().split(" \\+ ")).mapToInt(Integer::parseInt).sum();
+                    } else { // 오른쪽 항에 곱셈 있음
+                        return Integer.parseInt(lop.trim()) + calc(rop);
                     }
-                    case SUB -> {
-                        if (Op.SUB.priorLv() >= nexOpPLv(nextExp)) {
-                            lop -= nextInt(nextExp);
-                        } else {
-                            return lop - calc(nextExp);
-                        }
+                } else { // 왼쪽 항에 곱셈 있음
+                    if (rop.indexOf(MULT) < 0) { // 오른쪽 항에 곱셈 없음
+                        return calc(lop) + Arrays.stream(rop.trim().split(" \\+ ")).mapToInt(Integer::parseInt).sum();
+                    } else { // 오른쪽 항에 곱셈 있음
+                        return calc(lop) + calc(rop);
                     }
-                    case MULT -> {
-                        if (Op.MULT.priorLv() >= nexOpPLv(nextExp)) {
-                            lop *= nextInt(nextExp);
-                        } else {
-                            return lop * calc(nextExp);
-                        }
-                    }
-                    case LP -> { return calc(nextExp);}
-                    case RP -> { /*return lop;*/}
-                    default -> {} // number
                 }
+            } else { // 덧셈 없음
+                return Arrays.stream(exp.trim().split(" \\* ")).mapToInt(Integer::parseInt).reduce(1, (a, b)-> a * b);
             }
         }
-        return lop;
     }
-
-    private static int nextInt(String[] exp) {
-        for(String s: exp) {
-            if(s.matches("-?\\d+")) {
-                return Integer.parseInt(s);
+    // 괄호 오른쪽의 인덱스를 찾기
+    private static int getrpidx (String exp) {
+        int pcnt = 0;
+        for (int i=0; i<exp.length(); i++) {
+            if(exp.charAt(i) == LP) { pcnt++;}
+            else if(exp.charAt(i) == RP) {
+                pcnt--;
+                if (pcnt == 0) { return i;}
             }
         }
-        return Integer.MIN_VALUE;
-    }
-
-    private static int nexOpPLv(String[] exp) {
-        for(String s: exp) {
-            Op o = Op.from(s);
-            if (o != null) { return o.priorLv();}
-        }
-        return 0; // exp의 끝
-    }
-
-    private enum Op {
-        ADD("+"),SUB("-"), MULT ("*"), LP("("), RP(")");
-
-        private final String symbol;
-        Op(String symbol) { this.symbol = symbol;}
-
-        public static Op from(String s) {
-            for (Op o: values()) {
-                if (o.symbol.equals(s)) { return o;}
-            }
-            return null;
-        }
-        // priorLv - 시작, ): 0, +|-: 1, *: 2, (: 3
-        public int priorLv() {
-            return switch (this) {
-                case ADD, SUB -> 1;
-                case MULT -> 2;
-                case LP -> 3;
-                case RP -> 0;
-            };
-        }
+        return -1;
     }
 }
